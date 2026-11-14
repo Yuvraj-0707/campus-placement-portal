@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CPIMP - Campus Placement Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen">
+
+  <nav class="border-b border-slate-800 bg-slate-900/80 backdrop-blur px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+    <div class="flex items-center space-x-3">
+      <div class="h-9 w-9 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20">CP</div>
+      <span class="text-lg font-bold tracking-tight">Campus Placement & Internship Portal</span>
+    </div>
+    <button onclick="triggerResetAndSeed()" id="seedBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-4 py-2 rounded-lg border border-slate-700 transition">
+      Reset & Seed Database
+    </button>
+  </nav>
+
+  <main class="max-w-6xl mx-auto p-6 space-y-6">
+
+    <!-- Overview Cards -->
+    <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-slate-900/90 border border-slate-800 p-5 rounded-xl">
+        <p class="text-xs font-medium text-slate-400">Total Registered Students</p>
+        <p id="totalStudents" class="text-2xl font-bold mt-1 text-slate-100">--</p>
+      </div>
+      <div class="bg-slate-900/90 border border-slate-800 p-5 rounded-xl">
+        <p class="text-xs font-medium text-slate-400">Eligible Candidates (SDE-I)</p>
+        <p id="eligibleCount" class="text-2xl font-bold mt-1 text-indigo-400">--</p>
+      </div>
+      <div class="bg-slate-900/90 border border-slate-800 p-5 rounded-xl">
+        <p class="text-xs font-medium text-slate-400">Drive Status</p>
+        <p class="text-2xl font-bold mt-1 text-emerald-400">NexTech SDE-I</p>
+      </div>
+      <div class="bg-slate-900/90 border border-slate-800 p-5 rounded-xl">
+        <p class="text-xs font-medium text-slate-400">Database Engine</p>
+        <p class="text-2xl font-bold mt-1 text-amber-400">MongoDB Atlas</p>
+      </div>
+    </section>
+
+    <!-- Interactive ACID Transaction Section -->
+    <section class="bg-gradient-to-r from-slate-900 to-indigo-950/40 border border-indigo-900/50 p-6 rounded-xl space-y-4">
+      <div class="flex flex-col md:flex-row justify-between md:items-center gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            Multi-Document ACID Placement Lock
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">
+            Simulate atomic offer acceptance: updates application status, locks student placement status, and revokes competing drives.
+          </p>
+        </div>
+        <button onclick="executeTransaction()" id="txBtn" class="bg-indigo-600 hover:bg-indigo-500 font-semibold text-xs px-5 py-2.5 rounded-lg shadow-lg shadow-indigo-600/30 transition">
+          Accept Offer & Lock Placement
+        </button>
+      </div>
+      <div id="txResult" class="hidden text-xs bg-slate-950/80 p-4 rounded-lg border border-slate-800 font-mono text-emerald-400"></div>
+    </section>
+
+    <!-- Live Aggregation Report -->
+    <section class="bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden">
+      <div class="p-5 border-b border-slate-800 flex justify-between items-center">
+        <div>
+          <h3 class="text-base font-semibold text-white">Live Aggregation Pipeline Report</h3>
+          <p class="text-xs text-slate-400">Results computed live via MongoDB <code>$lookup</code> and <code>$unwind</code></p>
+        </div>
+        <button onclick="fetchDriveReport()" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium">Refresh</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-950/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+            <tr>
+              <th class="p-4">Candidate</th>
+              <th class="p-4">Roll Number</th>
+              <th class="p-4">Branch</th>
+              <th class="p-4">Current Stage</th>
+              <th class="p-4">Rounds Cleared</th>
+              <th class="p-4">Avg Score</th>
+              <th class="p-4">Offer</th>
+            </tr>
+          </thead>
+          <tbody id="reportTable" class="divide-y divide-slate-800 text-slate-300">
+            <tr><td colspan="7" class="p-4 text-center text-slate-500">Loading live data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Students Directory Filter -->
+    <section class="bg-slate-900/90 border border-slate-800 rounded-xl overflow-hidden">
+      <div class="p-5 border-b border-slate-800">
+        <h3 class="text-base font-semibold text-white">Student Eligibility Verification</h3>
+        <p class="text-xs text-slate-400">Live query evaluating CGPA &gt;= 8.0, 0 backlogs, and CS/IT branches</p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-950/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+            <tr>
+              <th class="p-4">Name</th>
+              <th class="p-4">Roll Number</th>
+              <th class="p-4">Branch</th>
+              <th class="p-4">CGPA</th>
+              <th class="p-4">Backlogs</th>
+              <th class="p-4">Placement Status</th>
+            </tr>
+          </thead>
+          <tbody id="studentsTable" class="divide-y divide-slate-800 text-slate-300">
+            <tr><td colspan="6" class="p-4 text-center text-slate-500">Loading student directory...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    async function loadAllData() {
+      await Promise.all([fetchStudents(), fetchDriveReport()]);
+    }
+
+    async function fetchStudents() {
+      try {
+        const res = await fetch('/api/students');
+        const data = await res.json();
+        document.getElementById('totalStudents').innerText = data.length;
+
+        const tbody = document.getElementById('studentsTable');
+        tbody.innerHTML = data.map(s => `
+          <tr class="hover:bg-slate-800/40">
+            <td class="p-4 font-medium text-white">${s.firstName} ${s.lastName}</td>
+            <td class="p-4 font-mono text-slate-400">${s.rollNumber}</td>
+            <td class="p-4">${s.branch}</td>
+            <td class="p-4 font-semibold text-indigo-400">${s.cgpa.toFixed(2)}</td>
+            <td class="p-4">${s.activeBacklogs}</td>
+            <td class="p-4">
+              <span class="px-2 py-1 rounded text-[11px] font-semibold ${
+                s.placementStatus === 'Placed' 
+                  ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' 
+                  : 'bg-slate-800 text-slate-300'
+              }">
+                ${s.placementStatus}
+              </span>
+            </td>
+          </tr>
+        `).join('');
+
+        const eligible = data.filter(s => s.cgpa >= 8.0 && s.activeBacklogs === 0 && (s.branch === 'Computer Science' || s.branch === 'Information Technology'));
+        document.getElementById('eligibleCount').innerText = eligible.length;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function fetchDriveReport() {
+      try {
+        const res = await fetch('/api/report');
+        const data = await res.json();
+        const tbody = document.getElementById('reportTable');
+        tbody.innerHTML = data.map(r => `
+          <tr class="hover:bg-slate-800/40">
+            <td class="p-4 font-medium text-white">${r.candidate}</td>
+            <td class="p-4 font-mono text-slate-400">${r.rollNumber}</td>
+            <td class="p-4">${r.branch}</td>
+            <td class="p-4">
+              <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-indigo-950 text-indigo-300 border border-indigo-800">
+                ${r.currentStage}
+              </span>
+            </td>
+            <td class="p-4">${r.roundsCleared}</td>
+            <td class="p-4 font-semibold text-amber-400">${r.avgScore || 'N/A'}</td>
+            <td class="p-4">
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold ${r.hasOffer === 'YES' ? 'text-emerald-400' : 'text-slate-500'}">
+                ${r.hasOffer}
+              </span>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function executeTransaction() {
+      const btn = document.getElementById('txBtn');
+      const resBox = document.getElementById('txResult');
+      btn.disabled = true;
+      btn.innerText = 'Committing Transaction...';
+
+      try {
+        const res = await fetch('/api/accept-offer', { method: 'POST' });
+        const result = await res.json();
+        resBox.classList.remove('hidden');
+        resBox.innerHTML = `<strong>Transaction Committed:</strong> ${result.message}<br/>Status verified on Atlas: <strong>${result.student.firstName} ${result.student.lastName}</strong> is now <strong>${result.student.placementStatus}</strong>.`;
+        await loadAllData();
+      } catch (err) {
+        alert('Transaction failed: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Accept Offer & Lock Placement';
+      }
+    }
+
+    async function triggerResetAndSeed() {
+      const btn = document.getElementById('seedBtn');
+      btn.disabled = true;
+      btn.innerText = 'Resetting Database...';
+      try {
+        await fetch('/api/seed', { method: 'POST' });
+        await loadAllData();
+      } catch (err) {
+        alert('Seeding failed: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = 'Reset & Seed Database';
+      }
+    }
+
+    // Initial load
+    loadAllData();
+  </script>
+</body>
+</html>
